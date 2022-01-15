@@ -63,7 +63,7 @@
                 </div>
             </section>
             <section>
-                <button class="longButton" @click="restart()">Restart</button>
+                <button class="longButton" @click="start()">Restart</button>
             </section>
         </article>
     </div>
@@ -232,10 +232,12 @@
                     for (var i = 0; i < size; i++) arr.push(i);
                     return arr;
                 },
-                start: function(length){
+                start: function(){
                     candidates = [];
                     this.buffer = [0, 0, 0, 0, 0];
                     this.bufferStr = "00000";
+                    this.tree = tree;
+                    this.dict = dict_ans;
                     this.updateCandidates();
                 },
                 updateCandidates: function() {
