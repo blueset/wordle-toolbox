@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Toolbox</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css">
+    <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="logo-box">
+        <div class="logo">
+            <span class="w">W</span><span class="t">T</span>
+        </div>
+        <div class="titles">
+            <h1>Wordle&nbsp;Toolbox</h1>
+            <h2>by Eana Hufwe</h2>
+        </div>
+    </div>
+    <article>
+        <a href="interactive.html">Solver</a> ·
+        <a href="lookup.html">Filter</a> ·
+        <a href="https://labs.1a23.com/tonguess/">Tonguess solver</a><br>
+        <a href="https://github.com/blueset/wordle-toolbox">GitHub</a> ·
+        <a href="https://1a23.com/">1A23 Studio</a>
+    </article>
+    <style>
+        html, body {
+            height: 100vh;
+        }
+        
+        body {
+            font-family: "Inter", sans-serif;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #121213;
+        }
+
+        article {
+            text-align: center;
+        }
+
+        .logo-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: start;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5em;
+            height: 1.5em;
+            border: 3px solid #565758;
+            color: #d7dadc;
+            margin-right: 0.5rem;
+        }
+        span.w {
+            border: none;
+            background-color: #538D4E;
+        }
+
+        span.t {
+            border: none;
+            background-color: #B5A03A;
+        }
+
+        .logo-box h1,
+        .logo-box h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+    </style>
+</body>
+
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Solver</title>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.3.5/dist/alpine.js" defer></script>
+    <script src="data.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css">
+    <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inconsolata&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container" x-data="app()" x-init="start()">
+        <div class="logo-box">
+            <div class="logo">
+                <span class="w">W</span><span class="s">S</span>
+            </div>
+            <div class="titles">
+                <h1>Wordle Solver</h1>
+                <h2>by Eana Hufwe</h2>
+            </div>
+        </div>
+        <article id="guess">
+            <section>
+                <button class="longButton" @click="start()">Restart</button>
+            </section>
+            <section class="guess">
+                <h3>Guess...</h3>
+                <p id="guess" class="word">
+                    <span x-bind:class="'letter ' + (buffer[0] == 1 ? 'found' : buffer[0] == 2 ? 'correct' : '')" x-text="guess[0]"></span>
+                    <span x-bind:class="'letter ' + (buffer[1] == 1 ? 'found' : buffer[1] == 2 ? 'correct' : '')" x-text="guess[1]"></span>
+                    <span x-bind:class="'letter ' + (buffer[2] == 1 ? 'found' : buffer[2] == 2 ? 'correct' : '')" x-text="guess[2]"></span>
+                    <span x-bind:class="'letter ' + (buffer[3] == 1 ? 'found' : buffer[3] == 2 ? 'correct' : '')" x-text="guess[3]"></span>
+                    <span x-bind:class="'letter ' + (buffer[4] == 1 ? 'found' : buffer[4] == 2 ? 'correct' : '')" x-text="guess[4]"></span>
+                </p>
+                <h3>... and choose ...</h3>
+                <div id="options" class="word">
+                    <template x-for="i in range(5)" x-key="i">
+                        <div class="option-column">
+                            <button @click="choose(i, 0)" class="letter"></button>
+                            <button @click="choose(i, 1)" class="found letter"></button>
+                            <button @click="choose(i, 2)" class="correct letter"></button>
+                            <!--  x-bind:disabled="options[`${i}${j}`] == undefined" -->
+                            <!-- <span class="count" x-text="optionsOpt.options && optionsOpt.options[`${i}${j}`]" x-show="options[`${i}${j}`] != undefined"></span> -->
+                        </div>
+                    </template>
+                </div>
+                <p>
+                    <button class="longButton" @click="confirmChoice()" x-bind:disabled="options[bufferStr] == undefined" >
+                        Submit (<span x-text="candidates.length"></span> &rarr; <span x-text="optionsOpt.options[bufferStr] || 0"></span>)
+                    </button>
+                </p>
+                <p><em>Note: the guesses will NOT work in hard mode.</em></p>
+            </section>
+            <section>
+                <h3><span x-text="candidates.length"></span> possible word<span x-show="candidates.length != 1">s</span> so far:</h3>
+                <div class="candidates">
+                    <template x-for="word in candidates.slice(0, 100)" x-key="word">
+                        <div class="candidate" x-text="word"></div>
+                    </template>
+                    <div class="candidate" x-show="candidates && candidates.length > 100">...</div>
+                </div>
+            </section>
+            <section>
+                <button class="longButton" @click="restart()">Restart</button>
+            </section>
+        </article>
+    </div>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #121213;
+        }
+        .logo-box {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5em;
+            height: 1.5em;
+            border: 3px solid #565758;
+            color: #D8DADC;
+            margin-right: 0.5rem;
+        }
+        span.w {
+            border: none;
+            background-color: #538D4E;
+        }
+
+        span.s {
+            border: none;
+            background-color: #B5A03A;
+        }
+
+        .logo-box h1, .logo-box h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .word#guess, .word#options {
+            font-size: 2em;
+        }
+        .word {
+            display: flex;
+            justify-content: center;
+            font-weight: bold;
+            gap: 0.5rem;
+        }
+        .letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5em;
+            height: 1.5em;
+            border: 3px solid #565758;
+            color: #D8DADC;
+            background: transparent;
+            box-sizing: border-box;
+        }
+        .found.letter {
+            background-color: #B5A03A;
+            border: none;
+        }
+        .correct.letter {
+            background-color: #538D4E;
+            border: none;
+        }
+
+        .pick .word {
+            font-size: 2rem;
+        }
+
+        .pick h3 {
+            margin:  0;
+            line-height: 1;
+        }
+
+        p#guess {
+            margin: 0 auto;
+            font-size: 4rem;
+        }
+
+        #options {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .option-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .option-column button {
+            padding:  0;
+            font-variant-numeric: lining-nums;
+            position: relative;
+            margin: 0;
+        }
+
+        span.count {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            font-size: 0.75rem;
+        }
+
+        .candidate {
+            font-size: 1.5rem;
+            padding: 0.1em;
+            width: 6rem;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .candidates {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+            grid-row-gap: 0.5rem;
+            grid-column-gap: 0.5rem;
+        }
+
+        section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom-style: solid;
+        }
+        .longButton {
+            width: 100%;
+        }
+    </style>
+    <script>
+        function app(){
+            const extractCandidates = function(node, candidates) {
+                if (typeof node === "string") {
+                    candidates.push(node);
+                } else if (node !== null) {
+                    for (var key in node.outcomes) {
+                        extractCandidates(node.outcomes[key], candidates);
+                    }
+                }
+                return candidates;
+            };
+            return {
+                guess: "-----",
+                buffer: [0, 0, 0, 0, 0],
+                bufferStr: "00000",
+                dict: dict_ans,
+                tree: tree,
+                options: {},
+                optionsOpt: {},
+                candidates: [],
+                range: function(size) {
+                    const arr = [];
+                    for (var i = 0; i < size; i++) arr.push(i);
+                    return arr;
+                },
+                start: function(length){
+                    candidates = [];
+                    this.buffer = [0, 0, 0, 0, 0];
+                    this.bufferStr = "00000";
+                    this.updateCandidates();
+                },
+                updateCandidates: function() {
+                    if (this.tree === null) {
+                        this.guess = "== null ==";
+                        this.candidates = [];
+                        this.options = {};
+                    } else if (typeof this.tree === "string") {
+                        this.guess = this.tree;
+                        this.candidates = [this.tree];
+                        this.options = {};
+                    } else {
+                        this.guess = this.tree.guess;
+                        this.candidates = [];
+                        this.options = {};
+                        for (var i of Object.keys(this.tree.outcomes)) {
+                            if (this.tree.outcomes[i] != null) {
+                                const c = extractCandidates(this.tree.outcomes[i], []);
+                                this.options[i] = c.length;
+                                this.candidates = this.candidates.concat(c);
+                            }
+                        }
+                        this.optionsOpt.options = this.options;
+                    }
+                },
+                choose: function(idx, value) {
+                    this.buffer[idx] = value;
+                    this.bufferStr = this.buffer.join("");
+                },
+                confirmChoice: function(){
+                    this.tree = this.tree.outcomes[this.bufferStr];
+                    this.updateCandidates();
+                    this.buffer = [0, 0, 0, 0, 0];
+                    this.bufferStr = "00000";
+                }
+            };
+        }
+    </script>
+</body>
+</html>

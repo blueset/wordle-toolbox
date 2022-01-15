@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Filter</title>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.3.5/dist/alpine.js" defer></script>
+    <script src="data.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css">
+    <link href="https://free.bboxtype.com/embedfonts/?family=FiraGO:400,600i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inconsolata&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container" x-data="app()" x-init="init()">
+        <div class="logo-box">
+            <div class="logo">
+                <span class="w">W</span><span class="f">F</span>
+            </div>
+            <div class="titles">
+                <h1>Wordle Filter</h1>
+                <h2>by Eana Hufwe</h2>
+            </div>
+        </div>
+        <article>
+            <section>
+                <details open>
+                    <summary><h3 style="display: inline">How to use?</h3></summary>
+                    <p>Enter your guesses (word, then result) at the box below and click <kbd>Add</kbd>.</p>
+                    <p>
+                        Use <span class="letter">0</span> for letters not found anywhere in the word.
+                        Use <span class="letter found">1</span> for letters found in the word but in the wrong spot.
+                        Use <span class="letter correct">2</span> for letters in the right spot.
+
+                        For example, if your guess is
+                        <span class="letter">G</span> 
+                        <span class="letter">U</span> 
+                        <span class="letter">E</span>
+                        <span class="letter found">S</span>
+                        <span class="letter correct">S</span>, enter <code>GUESS00012</code>.
+                    </p>
+                </details>
+            </section>
+            <section>
+                <div class="title-row">
+                    <h3>History</h3>
+                    <button @click="undo()">Undo</button>
+                    <button @click="init()">Reset</button>
+                </div>
+                <div class="history-entries">
+                    <template x-for="entry in history" :key="entry.input">
+                        <div class="history-row">
+                            <div class="word">
+                                <span x-bind:class="'letter ' + (entry.key[0] == 1 ? 'found' : entry.key[0] == 2 ? 'correct' : '')" x-text="entry.input[0]"></span>
+                                <span x-bind:class="'letter ' + (entry.key[1] == 1 ? 'found' : entry.key[1] == 2 ? 'correct' : '')" x-text="entry.input[1]"></span>
+                                <span x-bind:class="'letter ' + (entry.key[2] == 1 ? 'found' : entry.key[2] == 2 ? 'correct' : '')" x-text="entry.input[2]"></span>
+                                <span x-bind:class="'letter ' + (entry.key[3] == 1 ? 'found' : entry.key[3] == 2 ? 'correct' : '')" x-text="entry.input[3]"></span>
+                                <span x-bind:class="'letter ' + (entry.key[4] == 1 ? 'found' : entry.key[4] == 2 ? 'correct' : '')" x-text="entry.input[4]"></span>
+                            </div>
+                            <p class="number">
+                                (<span x-text="entry.candidates.length"></span>)
+                            </p>
+                        </div>
+                    </template>
+                </div>
+            </section>
+            <section>
+                <h3>Type ...</h3>
+                <form @submit="addWord($event)">
+                    <input type="text" x-ref="textbox" x-model:value="input" @input="updateText()" required placeholder="GUESS00012">
+                    <button type="submit">Add</button>
+                </form>
+            </section>
+            <section>
+                <h3>Candidates (<span x-text="candidates.length"></span>)</h3>
+                <div class="candidates">
+                    <template x-for="word in candidates.slice(0, 100)" x-key="word">
+                        <div class="candidate" x-text="word"></div>
+                    </template>
+                    <div class="candidate" x-show="candidates && candidates.length > 100">...</div>
+                </div>
+            </section>
+        </article>
+    </div>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #121213;
+        }
+        .logo-box {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5em;
+            height: 1.5em;
+            border: 3px solid #565758;
+            color: #D8DADC;
+            margin-right: 0.5rem;
+        }
+        span.w {
+            border: none;
+            background-color: #538D4E;
+        }
+
+        span.f {
+            border: none;
+            background-color: #B5A03A;
+        }
+
+        .logo-box h1, .logo-box h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .word {
+            display: flex;
+            justify-content: center;
+            font-weight: bold;
+            gap: 0.5rem;
+        }
+        .letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5em;
+            height: 1.5em;
+            border: 3px solid #565758;
+            color: #D8DADC;
+            background: transparent;
+            box-sizing: border-box;
+            font-weight: bold;
+        }
+        .found.letter {
+            background-color: #B5A03A;
+            border: none;
+        }
+        .correct.letter {
+            background-color: #538D4E;
+            border: none;
+        }
+
+        .title-row {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .title-row h3 {
+            flex-grow: 1;
+        }
+
+        .history-row {
+            text-align: center;
+        }
+
+        .history-row .word {
+            font-size: 2rem;
+        }
+
+        .history-entries {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+            gap: 2rem;
+        }
+
+        form {
+            display: flex;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+        }
+
+        .candidate {
+            font-size: 1.5rem;
+            font-family: monospace;
+            text-align: center;
+        }
+
+        .candidates {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(6em, 1fr));
+            gap: 0.5rem;
+        }
+
+        section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom-style: solid;
+        }
+    </style>
+    <script>
+        function app(){
+            const calculate = function(guess, answer) {
+                const result = [0,0,0,0,0], 
+                      exact_pos = [false, false, false, false, false], 
+                      present_ans = [false, false, false, false, false];
+
+                for (i = 0; i < 5; i++) {
+                    if (guess[i] === answer[i] && !present_ans[i]) {
+                        result[i] = 2;
+                        exact_pos[i] = true;
+                        present_ans[i] = true;
+                    }
+                }
+
+                for (i = 0; i < 5; i++) {
+                    if (!exact_pos[i]) {
+                        for (j = 0; j < 5; j++) {
+                            if (guess[i] === answer[j] && !present_ans[j]) {
+                                result[i] = 1;
+                                present_ans[j] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return result.join("");
+            };
+            
+            return {
+                input: "",
+                dict: [],
+                candidates: dict_ans,
+                history: [],
+                init: function(){
+                     this.candidates = dict_ans;
+                     this.input = "";
+                     this.history = [];
+                },
+                updateText: function(){
+                    this.input = this.input.toUpperCase();
+                    var regex = /^[A-Z]{5}[012]{5}$/g;
+                    if (this.input.match(regex) === null) {
+                        this.$refs.textbox.setCustomValidity("Must be a word followed by 5 numbers");
+                    }
+                    else {
+                        this.$refs.textbox.setCustomValidity("");
+                    }
+                },
+                addWord: function(e) {
+                    e.preventDefault();
+                    const word = this.input.substr(0, 5);
+                    const key = this.input.substr(5, 5);
+
+                    this.candidates = this.candidates.filter((v) => {
+                        return calculate(word, v) === key;
+                    });
+
+                    this.history.push({
+                        input: this.input,
+                        candidates: [...this.candidates],
+                        word: word,
+                        key: key,
+                    });
+                    this.input = "";
+                },
+                undo: function() {
+                    if (this.history.length < 2) {
+                        return this.init();
+                    }
+                    this.history.pop();
+                    const {candidates, length} = this.history[this.history.length - 1];
+                    this.candidates = candidates;
+                    this.length = length;
+                },
+            };
+        }
+    </script>
+</body>
+</html>
